@@ -84,8 +84,10 @@ def result():
                         if xa=='' and quan =='' and tinh!='':
                             if tinh.lower() in elems1[18].getText().lstrip('\n').lower():
                                 content.append(c2)
-    else:
+    if s==None:
         error='Please login to see the result'
+    if page1==None or page2==None:
+        error='Please enter page number to search'
     if request.method == 'POST':
         returnObj=request.form['username'].lower()
         if returnObj=='yes':
