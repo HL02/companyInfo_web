@@ -85,7 +85,7 @@ def searchpage():
                     session['url_xa']='https://vinabiz.org'+elems_xa[z].get('href')
                     break
     #tim so trang
-        url_xa=session.get('url_xa')
+        url_xa=session['url_xa']
         res=requests.get(url_xa)
         soup=bs4.BeautifulSoup(res.text,features="html.parser")
         elems=soup.select('li a')
@@ -97,18 +97,18 @@ def searchpage():
             return redirect(url_for('result'))
     else:
         error='Please login to see the result'
-    return render_template('searchpage.html',num=session['num'],error=error)   
+    return render_template('searchpage.html',num=session.get('num'),error=error)   
 @app.route('/result',methods=['GET', 'POST'])
 def result():
     content=[]
     error=None
     s=session.get('s')
-    url_xa=session.get('url_xa')
+    url_xa=session['url_xa']
+    num=session.get('num')
     listPage=session['listPage']+',0'
     listPage=list(eval(listPage))
-    num=int(session.get('num'))
     if s!=None:
-        for y in range(1,num+1):#Get information
+        for y in range(1,int(num)+1):#Get information
             if y in listPage:
                 url_cty=url_xa+'/'+str(y)
                 res=s.get(url_cty)
