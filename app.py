@@ -9,6 +9,7 @@ Session(app)
 app.secret_key='thuhienluuthi'
 @app.route('/')
 def home():
+    session['n']=None
     return render_template('index.html')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -24,10 +25,10 @@ def login():
                         'rememberMe': 'true','rememberMe': 'false',
                         '__RequestVerificationToken': token}
             s.post('https://vinabiz.org/account/login',data=login_data)
-            session['s']=s
             if 'Tài khoản' in s.get('https://vinabiz.org').text:
                 session['s']=s
-                return redirect(url_for('home'))
+                session['n']=1
+                return redirect(url_for('search'))
             else:
                 error = 'Invalid Credentials. Please try again.'
     return render_template('login.html', error=error)
@@ -100,14 +101,14 @@ def searchpage():
     return render_template('searchpage.html',num=session.get('num'),error=error)   
 @app.route('/result',methods=['GET', 'POST'])
 def result():
-    content=[]
     error=None
-    s=session.get('s')
-    url_xa=session['url_xa']
-    num=session.get('num')
-    listPage=session['listPage']+',0'
-    listPage=list(eval(listPage))
-    if s!=None:
+    if session['n']!=None: 
+        session['content']=[]
+        s=session.get('s')
+        url_xa=session['url_xa']
+        num=session.get('num')
+        listPage=session['listPage']+',0'
+        listPage=list(eval(listPage))
         for y in range(1,int(num)+1):#Get information
             if y in listPage:
                 url_cty=url_xa+'/'+str(y)
@@ -122,19 +123,19 @@ def result():
                     if 'NNT đang hoạt động (đã được cấp GCN ĐKT)' in elems1[14].getText():
                         if elems1[20].getText()!='\n':
                             c1=elems1[2].getText()+' - '+elems1[6].getText().lstrip(' \n')+' - '+elems1[12].getText()+' - '+elems1[48].getText().lstrip('\n')+' - '+'Phone: '+elems1[20].getText().lstrip('\n') #Get phoneNum
-                            content.append(c1)
+                            session['content'].append(c1)
                         else:
                             c1=elems1[2].getText()+' - '+elems1[6].getText().lstrip(' \n')+' - '+elems1[12].getText()+' - '+elems1[48].getText().lstrip('\n')+' - '+'Phone: 0'
-                            content.append(c1)
+                            session['content'].append(c1)
                 else:
                     pass
-    if s==None:
+    if session['n']==None:
         error='Nothing to see. Please login and search'
     if request.method == 'POST':
         returnObj=request.form['username'].lower()
         if returnObj=='yes':
             return redirect(url_for('search'))
-    return render_template('content.html',content=content,listPage=listPage,error=error,num=int(session.get('num')))
+    return render_template('content.html',content=session.get('content'),listPage=list(eval(session['listPage']+',0')),error=error,num=int(session.get('num')))
 @app.route('/logout')
 def logout():
     session.pop('username',None)
