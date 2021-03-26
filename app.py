@@ -102,13 +102,14 @@ def searchpage():
 @app.route('/result',methods=['GET', 'POST'])
 def result():
     error=None
+    listPage='0'
+    num=session.get('num')
     if session['n']!=None: 
         session['content']=[]
         s=session.get('s')
+        num=int(num)
         url_xa=session['url_xa']
-        num=session.get('num')
-        listPage=session['listPage']+',0'
-        listPage=list(eval(listPage))
+        listPage=list(eval(listPage+','+session['listPage']))
         for y in range(1,int(num)+1):#Get information
             if y in listPage:
                 url_cty=url_xa+'/'+str(y)
@@ -135,7 +136,7 @@ def result():
         returnObj=request.form['username'].lower()
         if returnObj=='yes':
             return redirect(url_for('search'))
-    return render_template('content.html',content=session.get('content'),listPage=list(eval(session['listPage']+',0')),error=error,num=int(session.get('num')))
+    return render_template('content.html',content=session.get('content'),listPage=listPage,error=error,num=num)
 @app.route('/logout')
 def logout():
     session.pop('username',None)
