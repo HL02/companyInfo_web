@@ -108,13 +108,13 @@ def content_page(y,url_xa,s,queue,c):#Get information
         soup1=bs4.BeautifulSoup(res1.text,features="html.parser")
         elems1=soup1.select('td')
         if 'NNT đang hoạt động (đã được cấp GCN ĐKT)' in elems1[14].getText():
-            nganhnghe=elems1[48].getText().lstrip('\n').split(' ')
+            nganhnghe=elems1[48].getText().lower().lstrip('\n').split(' ')
             for i in c:
                 if i=='0':
-                    break
+                    e=['0']
                 if i in nganhnghe:
                     e.append(i in nganhnghe)
-            if len(e)>=len(c)-1 or e==[]: 
+            if len(e)>=len(c)-1 or e==['0']: 
                 c1=elems1[2].getText()+' - '+elems1[6].getText().lstrip(' \n')+' - '+elems1[12].getText()+' - '+elems1[48].getText().lstrip('\n')+' - '+'Phone: '+elems1[20].getText().lstrip('\n')+'\n' #Get phoneNum
                 content.append(c1)
     queue.put(content)
@@ -137,7 +137,7 @@ def result():
         num=int(num)
         url_xa=session.get('url_xa')
         session['content']=[]
-        c=session['nganhnghe'].split(' ')
+        c=session['nganhnghe'].lower().split(' ')
         listPage=list(eval(listPage+','+session['listPage']))
         totalPage_=totalPage(listPage,num)
         m=Manager()
