@@ -13,10 +13,11 @@
       	{% if content ==[] %}
 	     <h3>Cannot find anything</h3>
              {% endif %}
-	{% if len(content) > 1 %}
+	{% if content!=[] %}
 	     {% for i in content %}
-	          {% for i in 
-	             {% endfor %}
+	         <h3>{{i}}</h3>
+	     {% endfor %}
+	{% endif %}
    <div class="container">
       <br>
       <form action="" method="post">
