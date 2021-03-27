@@ -2,8 +2,6 @@ from flask import Flask, render_template, redirect, url_for, request,session
 import requests,bs4,re
 from wtforms import Form, StringField, SelectField
 from flask_session import Session
-from threading import Thread
-from multiprocess import Queue, Process, Pool, Manager
 import numpy as np
 app=Flask(__name__)
 app.config['SESSION_PERMANENT']=False
@@ -68,6 +66,7 @@ def numPage(url_xa):
 @app.route('/searchpage', methods=['GET', 'POST'])
 def searchpage():
     error = None
+    error1=None
     num=''
     url='https://vinabiz.org/categories/tinhthanh'
     v=['btn','btn-labeled', 'btn-default', 'btn-block']
@@ -79,13 +78,25 @@ def searchpage():
     #tim tinh
     # elems_tinh
         elems_tinh=get_elems(url,s)
-        url_tinh=search_place(elems_tinh,tinh,v) 
+        url_tinh=search_place(elems_tinh,tinh,v)
+        if url_tinh==None:
+            error1='Địa chỉ không tồn tại. Vui lòng nhập lại'
+            error='e'
+            return render_template('searchpage.html',error=error,error1=error1)
     #tim quan
         elems_quan=get_elems(url_tinh,s)
-        url_quan=search_place(elems_quan,quan,v)    
+        url_quan=search_place(elems_quan,quan,v)
+        if url_quan==None:
+            error1='Địa chỉ không tồn tại. Vui lòng nhập lại'
+            error='e'
+            return render_template('searchpage.html',error=error,error1=error1)
     #tim xa
         elems_xa=get_elems(url_quan,s)
-        url_xa=search_place(elems_xa,xa,v)    
+        url_xa=search_place(elems_xa,xa,v)
+        if url_xa==None:
+            error1='Địa chỉ không tồn tại. Vui lòng nhập lại'
+            error='e'
+            return render_template('searchpage.html',error=error,error1=error1)
     #tim so trang
         session['url_xa']=url_xa
         session['num']=numPage(url_xa)
@@ -94,30 +105,31 @@ def searchpage():
             return redirect(url_for('result'))
     else:
         error='Please login to see the result'
-    return render_template('searchpage.html',num=session.get('num'),error=error)   
-def content_page(y,url_xa,s,queue,c):#Get information
-    content=queue.get()
-    url_cty=url_xa+'/'+str(y)
-    res=s.get(url_cty)
-    soup=bs4.BeautifulSoup(res.text,features="html.parser")
-    elems=soup.select('h4 a')
-    for i in range (len(elems)):
-        e=[]
-        linkCompany='http://vinabiz.org'+elems[i].get('href')
-        res1=s.get(linkCompany)
-        soup1=bs4.BeautifulSoup(res1.text,features="html.parser")
-        elems1=soup1.select('td')
-        if 'NNT đang hoạt động (đã được cấp GCN ĐKT)' in elems1[14].getText():
-            nganhnghe=elems1[48].getText().lower().lstrip('\n').split(' ')
-            for i in c:
-                if i=='0':
-                    e=['0']
-                if i in nganhnghe:
-                    e.append(i in nganhnghe)
-            if len(e)>=len(c)-1 or e==['0']: 
-                c1=elems1[2].getText()+' - '+elems1[6].getText().lstrip(' \n')+' - '+elems1[12].getText()+' - '+elems1[48].getText().lstrip('\n')+' - '+'Phone: '+elems1[20].getText().lstrip('\n')+'\n' #Get phoneNum
-                content.append(c1)
-    queue.put(content)
+    return render_template('searchpage.html',num=session.get('num'),error=error,error1=error1)   
+def content_page(totalPage_,url_xa,s,c):#Get information
+    content=[]
+    for y in totalPage_:
+        url_cty=url_xa+'/'+str(y)
+        res=s.get(url_cty)
+        soup=bs4.BeautifulSoup(res.text,features="html.parser")
+        elems=soup.select('h4 a')
+        for i in range (len(elems)):
+            e=[]
+            linkCompany='http://vinabiz.org'+elems[i].get('href')
+            res1=s.get(linkCompany)
+            soup1=bs4.BeautifulSoup(res1.text,features="html.parser")
+            elems1=soup1.select('td')
+            if 'NNT đang hoạt động (đã được cấp GCN ĐKT)' in elems1[14].getText():
+                nganhnghe=elems1[48].getText().lower().lstrip('\n').split(' ')
+                for i in c:
+                    if i=='0':
+                        e=['0']
+                    if i in nganhnghe:
+                        e.append(i in nganhnghe)
+                if len(e)>=len(c)-1 or e==['0']: 
+                    c1=elems1[2].getText()+' - '+elems1[6].getText().lstrip(' \n')+' - '+elems1[12].getText()+' - '+elems1[48].getText().lstrip('\n')+' - '+'Phone: '+elems1[20].getText().lstrip('\n')+'\n' #Get phoneNum
+                    content.append(c1)
+    return content
 def totalPage(listPage,num):
     totalPage=[]
     if listPage==[0,0]:
@@ -136,21 +148,10 @@ def result():
         s=session.get('s')
         num=int(num)
         url_xa=session.get('url_xa')
-        session['content']=[]
         c=session['nganhnghe'].lower().split(' ')
         listPage=list(eval(listPage+','+session['listPage']))
         totalPage_=totalPage(listPage,num)
-        m=Manager()
-        q=m.Queue()
-        q.put(session['content'])
-        p={}
-        for y in totalPage_:
-            p[y]=Thread(target=content_page,args=(y,url_xa,s,q,c))
-            p[y].start()
-        for y in totalPage_:
-            p[y].join()
-        if not q.empty():
-            session['content']=q.get()
+        session['content']=content_page(totalPage_,url_xa,s,c)
     if session['n']==None:
         error='Nothing to see. Please login and search'
     if request.method == 'POST':

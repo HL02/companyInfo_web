@@ -25,10 +25,10 @@
           request.form.username }}">
          <input class="btn btn-default" type="submit" value="Search">
       </form>
+        {% endif %}
         {% if session.username %}
             <h6>You are Register as {{session.username}} <a href="/logout">Logout</a></h6>
         {% endif %}
     </div>
-   {% endif %}
   </body>
 </html>

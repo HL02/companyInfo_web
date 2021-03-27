@@ -8,7 +8,10 @@
     <div class="container">
       <br>
       <form action="" method="post">
-      {% if error !=None %}
+       {% if error1 !=None and error=='e' %}
+        	<h2>{{error1}}<a href="/search"> Search</a></h2>
+       {% endif %}
+       {% if error !=None and error!='e' %}
         	<h2>{{error}}<a href="/login"> Login</a></h2>
        {% endif %}
        {% if error==None %}
